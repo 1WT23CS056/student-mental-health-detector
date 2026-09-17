@@ -9,6 +9,7 @@ from components.navigation import (
     download_report_page
 )
 
+from mind_aura_chatbot import render_mind_aura_chatbot
 
 # ==================================================
 # PAGE CONFIG
@@ -95,5 +96,12 @@ else:
         [login_page],
         position="hidden"
     )
+
+# ==================================================
+# MIND AURA CHATBOT
+# ==================================================
+
+if st.session_state.logged_in:
+    render_mind_aura_chatbot()
 
 pg.run()
