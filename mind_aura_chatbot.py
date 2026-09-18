@@ -3,6 +3,7 @@ from google import genai
 from components.history import get_user_history
 import tempfile
 import os
+import traceback
 import pandas as pd
 
 # ==================================================
@@ -701,7 +702,10 @@ def _process_message(message_value):
             )
 
         except Exception as e:
-            st.error(f"Mind Aura error: {e}")
+            st.error(f"Mind Aura error: {type(e).__name__}: {e}")
+            print("===== MIND AURA ERROR =====")
+            traceback.print_exc()
+            print("===========================")
 
             reply = (
                 "I'm having trouble connecting "
