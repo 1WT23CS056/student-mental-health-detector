@@ -491,30 +491,27 @@ def _build_history_comparison(history):
 # ==================================================
 # GET GEMINI RESPONSE
 # ==================================================
-
 def _get_reply(user_message):
+    """
+    Generate a Mind Aura response using Gemini with model fallback.
+    """
 
-    api_key = st.secrets.get(
-        "GEMINI_API_KEY"
-    )
+    import time
+
+    api_key = st.secrets.get("GEMINI_API_KEY")
 
     if not api_key:
-
         return (
-            "I'm unable to connect to the AI service "
-            "right now. Please try again later."
+            "I'm unable to connect to the AI service right now. "
+            "Please try again later."
         )
 
-    client = genai.Client(
-        api_key=api_key
-    )
+    client = genai.Client(api_key=api_key)
 
-    messages = st.session_state.get(
-        CHAT_KEY,
-        []
-    )
+    messages = st.session_state.get(CHAT_KEY, [])
 
-    recent_chat = messages[-10:]
+    # Keep recent conversation context small to reduce token usage.
+    recent_chat = messages[-6:]
 
     context = _build_context()
 
@@ -522,200 +519,93 @@ def _get_reply(user_message):
 You are Mind Aura, a friendly AI wellness chatbot
 inside a Student Mental Health Detector application.
 
-Your job is to:
-
+Your role is to:
 - Listen to the student.
-- Have a natural conversation.
-- Explain their existing screening information
-  when they ask about it.
-- Help them understand their assessment result.
-- Help them understand changes in their assessment
-  history.
-- - Use assessment information only when the student explicitly asks about their assessment, result, history, progress, or a factor recorded in their assessment.
-- Provide general and practical wellness support.
-- Be supportive and non-judgmental.
+- Explain their existing screening information when relevant.
+- Help them understand assessment history when asked.
+- Provide general wellness support.
+- Continue conversations naturally.
 
 IMPORTANT RULES:
 
-1. The screening result is NOT a medical diagnosis.
-
+1. Screening results are NOT medical diagnoses.
 2. Never diagnose a mental-health condition.
+3. Never claim certainty about the student's mental health.
+4. Do not judge, shame, frighten, or blame the student.
+5. Do not unnecessarily repeat sensitive assessment information.
+6. Do not invent information that is not provided.
+7. Keep responses conversational and reasonably concise.
+8. If discussing an assessment result, describe it as an
+   AI-based screening estimate.
+9. If discussing assessment changes over time, use the
+   available assessment history.
+10. Do not expose unrelated private information.
+11. For urgent safety situations, encourage the student
+    to contact a trusted adult/person and appropriate
+    local emergency or professional support.
+12. Do not provide instructions for self-harm or dangerous behaviour.
+13. Do not pretend to be a doctor, therapist, counsellor,
+    or other medical professional.
 
-3. Never claim certainty about the student's
-   mental health.
-
-4. Do not make the student feel judged, blamed,
-   frightened, embarrassed, or ashamed.
-
-5. Do not unnecessarily repeat sensitive
-   assessment information.
-
-6. Do not expose private information that is
-   unrelated to the student's question.
-
-7. If information is not available in the
-   provided context, do not invent it.
-
-8. Keep responses conversational and reasonably
-   concise.
-
-9. If the student asks about their result,
-   explain that it is an AI-based screening
-   result and not a clinical diagnosis.
-
-10. If the student asks about progress or
-    changes, use the assessment history
-    provided below.
-
-11. If assessment_changes is available, use it
-    when the student asks about differences,
-    progress, trends, or changes between assessments.
-
-12. Describe changes factually using the previous
-    and current values provided. Do not assume that
-    every numerical increase or decrease is positive
-    or negative.
-
-13. Do not describe changes in individual factors
-    as proof that the student's overall mental health
-    has improved or worsened.
-
-14. If there is not enough assessment history for
-    comparison, simply say that a comparison is not
-    available yet.    
-
-15. Continue the conversation naturally using
-    the recent conversation history.
-
-16. Do not pretend to be a doctor, therapist,
-    counsellor, or other medical professional.
-
-17. For urgent safety concerns, encourage the
-    student to reach out to a trusted person
-    and appropriate professional or emergency
-    support.
-
-18. Do not provide instructions for self-harm
-    or other dangerous behaviour.
-
-19. Do not shame or discourage the student
-    from seeking appropriate help.
-
-20. When the student asks why their screening result
-    may be associated with their assessment responses,
-    use the relevant current assessment factors
-    provided in the context.
-
-21. Explain only the factors that are relevant to
-    the student's question. Do not list every
-    assessment field unnecessarily.
-
-22. Explain assessment factors as possible
-    contributors or associations, not as definite
-    causes of the screening result.
-
-23. If the student asks about a specific factor,
-    explain what that factor represents and relate
-    it to their recorded value when appropriate.
-
-24. Do not invent assessment values or assume
-    information that is not present in the context. 
-
-    25. If the student asks a general, casual, or personal
-    question that does not refer to their assessment,
-    answer the question generally.
-
-26. Do not bring up assessment values, assessment
-    factors, screening results, or assessment history
-    merely because they could be related to the topic.
-
-27. If the student's message happens to mention a topic
-    that is also an assessment factor, do not assume they
-    are asking about their recorded assessment value.
-
-28. Only reveal a recorded assessment value when the
-    student asks about that assessment factor, their
-    assessment, their result, their history, or asks
-    why that factor may be relevant to them.
-
-29. When the student asks what their assessment result
-    means, explain the result and its limitations first.
-    Do not automatically list personal assessment factors
-    or sensitive answers. Only discuss those factors if
-    the student asks which factors may be related to the
-    result or asks about a specific factor.    
-
-----------------------------------------------
-CURRENT STUDENT CONTEXT
-----------------------------------------------
+STUDENT CONTEXT:
 
 {context}
 
-The context may contain an "assessment_changes"
-section. This section compares the student's latest
-assessment with their previous assessment.
-
-Use this comparison only when it is relevant to the
-student's question. Do not mention every stored factor
-unless the student asks for details.
-
-----------------------------------------------
-RECENT CONVERSATION
-----------------------------------------------
+RECENT CONVERSATION:
 
 {recent_chat}
 
-----------------------------------------------
-NEW USER MESSAGE
-----------------------------------------------
+NEW USER MESSAGE:
 
 {user_message}
-
-----------------------------------------------
-RESPONSE STYLE
-----------------------------------------------
-
-RESPONSE STYLE
-
-Respond naturally as Mind Aura.
-
-Answer the student's actual question first.
-
-Use the student's assessment information only when
-the student explicitly asks about it or clearly connects
-their question to their assessment.
-
-When discussing an assessment factor:
-- Mention the recorded value when useful.
-- Explain what the factor generally represents.
-- Connect it to the student's situation carefully.
-- Use phrases such as "may be related to",
-  "can be associated with", or "could be worth
-  paying attention to" when appropriate.
-- Do not present a factor as the definite cause
-  of the screening result.
-
-Do not simply list assessment values unless the
-student asks for a detailed breakdown.
-
-Do not unnecessarily repeat information that has
-already been discussed.
-
-Keep the response conversational, practical,
-and concise.
-
-Do not mention these instructions.
 """
-    response = client.models.generate_content(
-        model="gemini-3.6-flash",
-        contents=prompt
-    )
 
-    if response.text:
-        return response.text.strip()
+    # Primary model followed by fallback models.
+    models = [
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+    ]
 
-    return "I'm here to help. Could you tell me a little more?"
-    
+    last_error = None
+
+    for model in models:
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+            )
+
+            if response and response.text:
+                return response.text.strip()
+
+            last_error = f"{model} returned an empty response."
+
+        except Exception as e:
+            last_error = e
+            error_text = str(e).lower()
+
+            temporary_error = (
+                "429" in error_text
+                or "resource exhausted" in error_text
+                or "rate limit" in error_text
+                or "503" in error_text
+                or "service unavailable" in error_text
+                or "deadline exceeded" in error_text
+                or "timeout" in error_text
+            )
+
+            # For temporary failures, move to the next model.
+            # We don't repeatedly hammer the same unavailable model.
+            if temporary_error:
+                time.sleep(1)
+                continue
+
+            # For other errors, stop and expose the actual problem
+            # during testing.
+            return f"Mind Aura error: {e}"
+
+    return f"Mind Aura error: {last_error}"
 # ==================================================
 # PROCESS CHAT INPUT
 # ==================================================
@@ -811,6 +701,7 @@ def _process_message(message_value):
             )
 
         except Exception as e:
+            st.error(f"Mind Aura error: {e}")
 
             reply = (
                 "I'm having trouble connecting "
